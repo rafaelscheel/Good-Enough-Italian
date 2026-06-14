@@ -1,0 +1,11 @@
+name = "good-enough-italian-proxy"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# Deploy with:  wrangler deploy
+#
+# Then set the two required secrets (run each command and paste the value when prompted):
+#   wrangler secret put DEEPL_API_KEY
+#   wrangler secret put AUTH_PASSWORD
+#
+# Copy the Worker URL shown after deploy and paste it into the app's Settings.

@@ -10,8 +10,9 @@ const TOAST_DURATION = 3500; // ms before toast fades out
 
 // ─── State ──────────────────────────────────────────────────────────────────
 let state = {
-  deeplKey: '',
-  lists: {}       // { listName: [{ id, en, it }] }
+  proxyUrl: '',       // Cloudflare Worker URL
+  proxyPassword: '',  // password that gates access to the proxy
+  lists: {}           // { listName: [{ id, en, it }] }
 };
 
 // Tracks the currently playing list (for stop functionality)
@@ -33,7 +34,8 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      state.deeplKey = parsed.deeplKey || '';
+      state.proxyUrl = parsed.proxyUrl || '';
+      state.proxyPassword = parsed.proxyPassword || '';
       state.lists = parsed.lists || {};
     }
   } catch (e) {
@@ -54,50 +56,33 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-// ─── DeepL API ───────────────────────────────────────────────────────────────
-async function translateText(text, apiKey) {
-  const isFree = apiKey.trim().endsWith(':fx');
-  const endpoint = isFree
-    ? 'https://api-free.deepl.com/v2/translate'
-    : 'https://api.deepl.com/v2/translate';
+// ─── Translation via Cloudflare Worker proxy ──────────────────────────────────
+async function translateText(text) {
+  if (!state.proxyUrl) {
+    throw new Error('No proxy URL configured. Please open Settings.');
+  }
+  if (!state.proxyPassword) {
+    throw new Error('No proxy password configured. Please open Settings.');
+  }
 
   let response;
   try {
-    response = await fetch(endpoint, {
+    response = await fetch(state.proxyUrl, {
       method: 'POST',
-      headers: {
-        'Authorization': `DeepL-Auth-Key ${apiKey.trim()}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        text: [text],
-        source_lang: 'EN',
-        target_lang: 'IT'
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, password: state.proxyPassword }),
     });
-  } catch (networkErr) {
-    // Likely a CORS or network error
-    throw new Error(
-      'Network error: Could not reach DeepL. This is often a CORS issue when running ' +
-      'from a local file. Try serving the app over HTTP (e.g. via VS Code Live Server). ' +
-      'Original error: ' + networkErr.message
-    );
-  }
-
-  if (!response.ok) {
-    let errMsg = `DeepL API error ${response.status}`;
-    if (response.status === 403) {
-      errMsg = 'Invalid API key (403 Forbidden). Please check your DeepL key in Settings.';
-    } else if (response.status === 456) {
-      errMsg = 'DeepL quota exceeded (456). You have used up your free translation limit.';
-    } else if (response.status === 429) {
-      errMsg = 'Too many requests (429). Please wait a moment and try again.';
-    }
-    throw new Error(errMsg);
+  } catch (err) {
+    throw new Error('Could not reach the translation proxy. Check the URL in Settings. (' + err.message + ')');
   }
 
   const data = await response.json();
-  return data.translations[0].text;
+
+  if (!response.ok) {
+    throw new Error(data.error || `Proxy error ${response.status}`);
+  }
+
+  return data.translatedText;
 }
 
 // ─── Web Speech ──────────────────────────────────────────────────────────────
@@ -193,20 +178,23 @@ function closeModal(id) {
 
 // ─── Settings modal ──────────────────────────────────────────────────────────
 function openSettings() {
-  document.getElementById('deepl-key-input').value = state.deeplKey;
+  document.getElementById('proxy-url-input').value = state.proxyUrl;
+  document.getElementById('proxy-password-input').value = state.proxyPassword;
   openModal('modal-settings');
 }
 
 function saveSettings() {
-  const key = document.getElementById('deepl-key-input').value.trim();
-  if (!key) {
-    showToast('Please enter a DeepL API key.', 'warning');
+  const url = document.getElementById('proxy-url-input').value.trim();
+  const pwd = document.getElementById('proxy-password-input').value.trim();
+  if (!url || !pwd) {
+    showToast('Please fill in both the proxy URL and password.', 'warning');
     return;
   }
-  state.deeplKey = key;
+  state.proxyUrl = url;
+  state.proxyPassword = pwd;
   saveState();
   closeModal('modal-settings');
-  showToast('API key saved!', 'success');
+  showToast('Settings saved!', 'success');
 }
 
 // ─── Tab navigation ──────────────────────────────────────────────────────────
@@ -337,8 +325,8 @@ async function doTranslate() {
     return;
   }
 
-  if (!state.deeplKey) {
-    showToast('No API key set. Opening Settings…', 'warning');
+  if (!state.proxyUrl || !state.proxyPassword) {
+    showToast('Proxy not configured. Opening Settings…', 'warning');
     openSettings();
     return;
   }
@@ -348,7 +336,7 @@ async function doTranslate() {
   btn.innerHTML = '<span class="spinner"></span> Translating…';
 
   try {
-    const italian = await translateText(text, state.deeplKey);
+    const italian = await translateText(text);
     pendingTranslation = { en: text, it: italian };
 
     const outputGroup = document.getElementById('output-group');
@@ -586,7 +574,7 @@ function initEvents() {
 
   // Settings modal save
   document.getElementById('btn-save-settings').addEventListener('click', saveSettings);
-  document.getElementById('deepl-key-input').addEventListener('keydown', (e) => {
+  document.getElementById('proxy-password-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') saveSettings();
   });
 
@@ -631,9 +619,8 @@ function init() {
   initEvents();
   renderLists();
 
-  // Open Settings on first load if no API key is set
-  if (!state.deeplKey) {
-    // Small delay so the page is rendered first
+  // Open Settings on first load if the proxy isn't configured yet
+  if (!state.proxyUrl || !state.proxyPassword) {
     setTimeout(() => openSettings(), 120);
   }
 }

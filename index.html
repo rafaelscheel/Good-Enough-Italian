@@ -143,22 +143,37 @@
       </div>
       <div class="modal-body">
         <div class="input-group">
-          <label for="deepl-key-input">DeepL API Key</label>
+          <label for="proxy-url-input">Proxy URL</label>
           <input
-            type="password"
-            id="deepl-key-input"
-            placeholder="Your DeepL API key…"
+            type="url"
+            id="proxy-url-input"
+            placeholder="https://good-enough-italian-proxy.<you>.workers.dev"
             autocomplete="off"
+            spellcheck="false"
           />
           <p class="input-hint">
-            Get a free API key at <a href="https://www.deepl.com/pro-api" target="_blank" rel="noopener">deepl.com/pro-api</a>.
-            Free keys end with <code>:fx</code>.
+            The URL of your Cloudflare Worker. Deploy <code>worker.js</code> from this repo —
+            see <code>wrangler.toml</code> for instructions. The Worker stores your DeepL key
+            securely; it never reaches the browser.
+          </p>
+        </div>
+        <div class="input-group">
+          <label for="proxy-password-input">Password</label>
+          <input
+            type="password"
+            id="proxy-password-input"
+            placeholder="The password you set as AUTH_PASSWORD"
+            autocomplete="current-password"
+          />
+          <p class="input-hint">
+            The <code>AUTH_PASSWORD</code> secret you configured on the Worker. This is sent
+            over HTTPS and gates every translation request.
           </p>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" data-modal="modal-settings" data-action="cancel">Cancel</button>
-        <button class="btn btn-primary" id="btn-save-settings">Save Key</button>
+        <button class="btn btn-primary" id="btn-save-settings">Save</button>
       </div>
     </div>
   </div>

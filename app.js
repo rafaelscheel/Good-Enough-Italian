@@ -547,7 +547,6 @@ function handleOverlayClick(e) {
   // Close if user clicked the overlay backdrop itself (not the modal content)
   if (e.target.classList.contains('modal-overlay')) {
     e.target.hidden = true;
-    // If playback was interrupted by modal, nothing to clean up
   }
 }
 

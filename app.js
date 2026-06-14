@@ -10,7 +10,7 @@ const TOAST_DURATION = 3500; // ms before toast fades out
 
 // ─── State ──────────────────────────────────────────────────────────────────
 let state = {
-  deeplKey: '',
+  userEmail: '',  // optional: increases MyMemory daily limit from 5k to 50k chars
   lists: {}       // { listName: [{ id, en, it }] }
 };
 
@@ -33,7 +33,7 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      state.deeplKey = parsed.deeplKey || '';
+      state.userEmail = parsed.userEmail || '';
       state.lists = parsed.lists || {};
     }
   } catch (e) {
@@ -54,50 +54,34 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-// ─── DeepL API ───────────────────────────────────────────────────────────────
-async function translateText(text, apiKey) {
-  const isFree = apiKey.trim().endsWith(':fx');
-  const endpoint = isFree
-    ? 'https://api-free.deepl.com/v2/translate'
-    : 'https://api.deepl.com/v2/translate';
+// ─── MyMemory Translation API ────────────────────────────────────────────────────
+// Free, CORS-friendly: 5 000 chars/day anonymous, 50 000 chars/day with email.
+async function translateText(text) {
+  const params = new URLSearchParams({ q: text, langpair: 'en|it' });
+  if (state.userEmail) params.set('de', state.userEmail);
+  const url = `https://api.mymemory.translated.net/get?${params}`;
 
   let response;
   try {
-    response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Authorization': `DeepL-Auth-Key ${apiKey.trim()}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        text: [text],
-        source_lang: 'EN',
-        target_lang: 'IT'
-      })
-    });
-  } catch (networkErr) {
-    // Likely a CORS or network error
-    throw new Error(
-      'Network error: Could not reach DeepL. This is often a CORS issue when running ' +
-      'from a local file. Try serving the app over HTTP (e.g. via VS Code Live Server). ' +
-      'Original error: ' + networkErr.message
-    );
+    response = await fetch(url);
+  } catch (err) {
+    throw new Error('Network error — please check your internet connection.');
   }
 
   if (!response.ok) {
-    let errMsg = `DeepL API error ${response.status}`;
-    if (response.status === 403) {
-      errMsg = 'Invalid API key (403 Forbidden). Please check your DeepL key in Settings.';
-    } else if (response.status === 456) {
-      errMsg = 'DeepL quota exceeded (456). You have used up your free translation limit.';
-    } else if (response.status === 429) {
-      errMsg = 'Too many requests (429). Please wait a moment and try again.';
-    }
-    throw new Error(errMsg);
+    throw new Error(`Translation service error (${response.status}). Please try again.`);
   }
 
   const data = await response.json();
-  return data.translations[0].text;
+  if (data.responseStatus !== 200) {
+    const msg = data.responseDetails || 'Translation failed.';
+    if (String(data.responseStatus) === '429' || msg.toLowerCase().includes('limit')) {
+      throw new Error('Daily translation limit reached. Add your email in Settings to get 10× more capacity.');
+    }
+    throw new Error(msg);
+  }
+
+  return data.responseData.translatedText;
 }
 
 // ─── Web Speech ──────────────────────────────────────────────────────────────
@@ -193,20 +177,15 @@ function closeModal(id) {
 
 // ─── Settings modal ──────────────────────────────────────────────────────────
 function openSettings() {
-  document.getElementById('deepl-key-input').value = state.deeplKey;
+  document.getElementById('user-email-input').value = state.userEmail;
   openModal('modal-settings');
 }
 
 function saveSettings() {
-  const key = document.getElementById('deepl-key-input').value.trim();
-  if (!key) {
-    showToast('Please enter a DeepL API key.', 'warning');
-    return;
-  }
-  state.deeplKey = key;
+  state.userEmail = document.getElementById('user-email-input').value.trim();
   saveState();
   closeModal('modal-settings');
-  showToast('API key saved!', 'success');
+  showToast('Settings saved!', 'success');
 }
 
 // ─── Tab navigation ──────────────────────────────────────────────────────────
@@ -337,18 +316,12 @@ async function doTranslate() {
     return;
   }
 
-  if (!state.deeplKey) {
-    showToast('No API key set. Opening Settings…', 'warning');
-    openSettings();
-    return;
-  }
-
   const btn = document.getElementById('btn-translate');
   btn.classList.add('loading');
   btn.innerHTML = '<span class="spinner"></span> Translating…';
 
   try {
-    const italian = await translateText(text, state.deeplKey);
+    const italian = await translateText(text);
     pendingTranslation = { en: text, it: italian };
 
     const outputGroup = document.getElementById('output-group');
@@ -585,7 +558,7 @@ function initEvents() {
 
   // Settings modal save
   document.getElementById('btn-save-settings').addEventListener('click', saveSettings);
-  document.getElementById('deepl-key-input').addEventListener('keydown', (e) => {
+  document.getElementById('user-email-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') saveSettings();
   });
 
@@ -629,12 +602,6 @@ function init() {
   loadState();
   initEvents();
   renderLists();
-
-  // Open Settings on first load if no API key is set
-  if (!state.deeplKey) {
-    // Small delay so the page is rendered first
-    setTimeout(() => openSettings(), 120);
-  }
 }
 
 // Wait for DOM

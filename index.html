@@ -143,22 +143,23 @@
       </div>
       <div class="modal-body">
         <div class="input-group">
-          <label for="deepl-key-input">DeepL API Key</label>
+          <label for="user-email-input">Your Email <span style="font-weight:400;text-transform:none">(optional)</span></label>
           <input
-            type="password"
-            id="deepl-key-input"
-            placeholder="Your DeepL API key…"
-            autocomplete="off"
+            type="email"
+            id="user-email-input"
+            placeholder="you@example.com"
+            autocomplete="email"
           />
           <p class="input-hint">
-            Get a free API key at <a href="https://www.deepl.com/pro-api" target="_blank" rel="noopener">deepl.com/pro-api</a>.
-            Free keys end with <code>:fx</code>.
+            Translation is free and needs no API key. Adding your email increases the daily limit
+            from 5 000 to 50 000 characters via
+            <a href="https://mymemory.translated.net" target="_blank" rel="noopener">MyMemory</a>.
           </p>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" data-modal="modal-settings" data-action="cancel">Cancel</button>
-        <button class="btn btn-primary" id="btn-save-settings">Save Key</button>
+        <button class="btn btn-primary" id="btn-save-settings">Save</button>
       </div>
     </div>
   </div>

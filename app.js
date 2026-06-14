@@ -10,8 +10,9 @@ const TOAST_DURATION = 3500; // ms before toast fades out
 
 // ─── State ──────────────────────────────────────────────────────────────────
 let state = {
-  userEmail: '',  // optional: increases MyMemory daily limit from 5k to 50k chars
-  lists: {}       // { listName: [{ id, en, it }] }
+  proxyUrl: '',       // Cloudflare Worker URL
+  proxyPassword: '',  // password that gates access to the proxy
+  lists: {}           // { listName: [{ id, en, it }] }
 };
 
 // Tracks the currently playing list (for stop functionality)
@@ -33,7 +34,8 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      state.userEmail = parsed.userEmail || '';
+      state.proxyUrl = parsed.proxyUrl || '';
+      state.proxyPassword = parsed.proxyPassword || '';
       state.lists = parsed.lists || {};
     }
   } catch (e) {
@@ -54,34 +56,33 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-// ─── MyMemory Translation API ────────────────────────────────────────────────────
-// Free, CORS-friendly: 5 000 chars/day anonymous, 50 000 chars/day with email.
+// ─── Translation via Cloudflare Worker proxy ──────────────────────────────────
 async function translateText(text) {
-  const params = new URLSearchParams({ q: text, langpair: 'en|it' });
-  if (state.userEmail) params.set('de', state.userEmail);
-  const url = `https://api.mymemory.translated.net/get?${params}`;
+  if (!state.proxyUrl) {
+    throw new Error('No proxy URL configured. Please open Settings.');
+  }
+  if (!state.proxyPassword) {
+    throw new Error('No proxy password configured. Please open Settings.');
+  }
 
   let response;
   try {
-    response = await fetch(url);
+    response = await fetch(state.proxyUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, password: state.proxyPassword }),
+    });
   } catch (err) {
-    throw new Error('Network error — please check your internet connection.');
-  }
-
-  if (!response.ok) {
-    throw new Error(`Translation service error (${response.status}). Please try again.`);
+    throw new Error('Could not reach the translation proxy. Check the URL in Settings. (' + err.message + ')');
   }
 
   const data = await response.json();
-  if (data.responseStatus !== 200) {
-    const msg = data.responseDetails || 'Translation failed.';
-    if (String(data.responseStatus) === '429' || msg.toLowerCase().includes('limit')) {
-      throw new Error('Daily translation limit reached. Add your email in Settings to get 10× more capacity.');
-    }
-    throw new Error(msg);
+
+  if (!response.ok) {
+    throw new Error(data.error || `Proxy error ${response.status}`);
   }
 
-  return data.responseData.translatedText;
+  return data.translatedText;
 }
 
 // ─── Web Speech ──────────────────────────────────────────────────────────────
@@ -177,12 +178,20 @@ function closeModal(id) {
 
 // ─── Settings modal ──────────────────────────────────────────────────────────
 function openSettings() {
-  document.getElementById('user-email-input').value = state.userEmail;
+  document.getElementById('proxy-url-input').value = state.proxyUrl;
+  document.getElementById('proxy-password-input').value = state.proxyPassword;
   openModal('modal-settings');
 }
 
 function saveSettings() {
-  state.userEmail = document.getElementById('user-email-input').value.trim();
+  const url = document.getElementById('proxy-url-input').value.trim();
+  const pwd = document.getElementById('proxy-password-input').value.trim();
+  if (!url || !pwd) {
+    showToast('Please fill in both the proxy URL and password.', 'warning');
+    return;
+  }
+  state.proxyUrl = url;
+  state.proxyPassword = pwd;
   saveState();
   closeModal('modal-settings');
   showToast('Settings saved!', 'success');
@@ -313,6 +322,12 @@ async function doTranslate() {
 
   if (!text) {
     showToast('Please enter an English sentence first.', 'warning');
+    return;
+  }
+
+  if (!state.proxyUrl || !state.proxyPassword) {
+    showToast('Proxy not configured. Opening Settings…', 'warning');
+    openSettings();
     return;
   }
 
@@ -520,6 +535,7 @@ function handleOverlayClick(e) {
   // Close if user clicked the overlay backdrop itself (not the modal content)
   if (e.target.classList.contains('modal-overlay')) {
     e.target.hidden = true;
+    // If playback was interrupted by modal, nothing to clean up
   }
 }
 
@@ -558,7 +574,7 @@ function initEvents() {
 
   // Settings modal save
   document.getElementById('btn-save-settings').addEventListener('click', saveSettings);
-  document.getElementById('user-email-input').addEventListener('keydown', (e) => {
+  document.getElementById('proxy-password-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') saveSettings();
   });
 
@@ -602,6 +618,11 @@ function init() {
   loadState();
   initEvents();
   renderLists();
+
+  // Open Settings on first load if the proxy isn't configured yet
+  if (!state.proxyUrl || !state.proxyPassword) {
+    setTimeout(() => openSettings(), 120);
+  }
 }
 
 // Wait for DOM

@@ -143,17 +143,31 @@
       </div>
       <div class="modal-body">
         <div class="input-group">
-          <label for="user-email-input">Your Email <span style="font-weight:400;text-transform:none">(optional)</span></label>
+          <label for="proxy-url-input">Proxy URL</label>
           <input
-            type="email"
-            id="user-email-input"
-            placeholder="you@example.com"
-            autocomplete="email"
+            type="url"
+            id="proxy-url-input"
+            placeholder="https://good-enough-italian-proxy.<you>.workers.dev"
+            autocomplete="off"
+            spellcheck="false"
           />
           <p class="input-hint">
-            Translation is free and needs no API key. Adding your email increases the daily limit
-            from 5 000 to 50 000 characters via
-            <a href="https://mymemory.translated.net" target="_blank" rel="noopener">MyMemory</a>.
+            The URL of your Cloudflare Worker. Deploy <code>worker.js</code> from this repo —
+            see <code>wrangler.toml</code> for instructions. The Worker stores your DeepL key
+            securely; it never reaches the browser.
+          </p>
+        </div>
+        <div class="input-group">
+          <label for="proxy-password-input">Password</label>
+          <input
+            type="password"
+            id="proxy-password-input"
+            placeholder="The password you set as AUTH_PASSWORD"
+            autocomplete="current-password"
+          />
+          <p class="input-hint">
+            The <code>AUTH_PASSWORD</code> secret you configured on the Worker. This is sent
+            over HTTPS and gates every translation request.
           </p>
         </div>
       </div>

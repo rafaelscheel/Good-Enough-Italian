@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Good Enough Italian</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-flag">🇮🇹</span>
+        <span class="logo-text">Good Enough Italian</span>
+      </div>
+      <button class="btn-icon" id="btn-settings" title="Settings" aria-label="Open settings">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="tricolor-bar">
+      <div class="tricolor-green"></div>
+      <div class="tricolor-white"></div>
+      <div class="tricolor-red"></div>
+    </div>
+  </header>
+
+  <!-- ===== TAB NAV ===== -->
+  <nav class="tab-nav" role="tablist">
+    <button class="tab-btn active" data-tab="translate" role="tab" aria-selected="true" aria-controls="tab-translate">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tab-icon">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="2" y1="12" x2="22" y2="12"></line>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+      </svg>
+      Translate
+    </button>
+    <button class="tab-btn" data-tab="lists" role="tab" aria-selected="false" aria-controls="tab-lists">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tab-icon">
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+      </svg>
+      My Lists
+    </button>
+  </nav>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main>
+
+    <!-- TRANSLATE TAB -->
+    <section id="tab-translate" class="tab-panel active" role="tabpanel">
+      <div class="translate-card">
+        <div class="input-group">
+          <label for="english-input">English</label>
+          <textarea
+            id="english-input"
+            placeholder="Type an English sentence… (Ctrl+Enter to translate)"
+            rows="4"
+            spellcheck="true"
+          ></textarea>
+        </div>
+
+        <div class="translate-actions">
+          <button class="btn btn-primary" id="btn-translate">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="5 12 19 12"></polyline>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+            Translate
+          </button>
+        </div>
+
+        <div class="output-group" id="output-group" hidden>
+          <label>Italiano</label>
+          <div class="italian-output" id="italian-output"></div>
+          <div class="output-actions">
+            <button class="btn btn-secondary" id="btn-play-once">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              Play
+            </button>
+            <button class="btn btn-accent" id="btn-save-to-list">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              Save to List
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MY LISTS TAB -->
+    <section id="tab-lists" class="tab-panel" role="tabpanel" hidden>
+      <div class="lists-header">
+        <h2>My Lists</h2>
+        <button class="btn btn-primary" id="btn-new-list">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          New List
+        </button>
+      </div>
+      <div id="lists-container">
+        <!-- Lists rendered here by JS -->
+      </div>
+      <div id="lists-empty" class="empty-state" hidden>
+        <div class="empty-icon">📚</div>
+        <p>No lists yet. Translate something and save it to a list!</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== TOAST CONTAINER ===== -->
+  <div id="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ===== MODALS ===== -->
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="modal-settings" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="settings-title">Settings</h2>
+        <button class="btn-icon modal-close" data-modal="modal-settings" aria-label="Close settings">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="input-group">
+          <label for="deepl-key-input">DeepL API Key</label>
+          <input
+            type="password"
+            id="deepl-key-input"
+            placeholder="Your DeepL API key…"
+            autocomplete="off"
+          />
+          <p class="input-hint">
+            Get a free API key at <a href="https://www.deepl.com/pro-api" target="_blank" rel="noopener">deepl.com/pro-api</a>.
+            Free keys end with <code>:fx</code>.
+          </p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-modal="modal-settings" data-action="cancel">Cancel</button>
+        <button class="btn btn-primary" id="btn-save-settings">Save Key</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New List Modal -->
+  <div class="modal-overlay" id="modal-new-list" role="dialog" aria-modal="true" aria-labelledby="new-list-title" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="new-list-title">Create New List</h2>
+        <button class="btn-icon modal-close" data-modal="modal-new-list" aria-label="Close">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="input-group">
+          <label for="new-list-name">List Name</label>
+          <input
+            type="text"
+            id="new-list-name"
+            placeholder="e.g. At the restaurant…"
+            maxlength="60"
+          />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-modal="modal-new-list" data-action="cancel">Cancel</button>
+        <button class="btn btn-primary" id="btn-confirm-new-list">Create List</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save to List Modal -->
+  <div class="modal-overlay" id="modal-save-to-list" role="dialog" aria-modal="true" aria-labelledby="save-list-title" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="save-list-title">Save to List</h2>
+        <button class="btn-icon modal-close" data-modal="modal-save-to-list" aria-label="Close">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="save-list-select-group" class="input-group">
+          <label for="save-list-select">Choose a list</label>
+          <select id="save-list-select"></select>
+        </div>
+        <p class="modal-divider">— or —</p>
+        <div class="input-group">
+          <label for="save-new-list-name">Create a new list</label>
+          <input
+            type="text"
+            id="save-new-list-name"
+            placeholder="New list name…"
+            maxlength="60"
+          />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-modal="modal-save-to-list" data-action="cancel">Cancel</button>
+        <button class="btn btn-primary" id="btn-confirm-save">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Sentence Modal -->
+  <div class="modal-overlay" id="modal-edit-sentence" role="dialog" aria-modal="true" aria-labelledby="edit-sentence-title" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="edit-sentence-title">Edit Sentence</h2>
+        <button class="btn-icon modal-close" data-modal="modal-edit-sentence" aria-label="Close">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="input-group">
+          <label for="edit-italian">Italian</label>
+          <textarea id="edit-italian" rows="3"></textarea>
+        </div>
+        <div class="input-group">
+          <label for="edit-english">English</label>
+          <textarea id="edit-english" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-modal="modal-edit-sentence" data-action="cancel">Cancel</button>
+        <button class="btn btn-primary" id="btn-confirm-edit">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -12,6 +12,7 @@ const TOAST_DURATION = 3500; // ms before toast fades out
 let state = {
   proxyUrl: '',       // Cloudflare Worker URL
   proxyPassword: '',  // password that gates access to the proxy
+  pauseDuration: 1,   // seconds of silence between sentences during list playback
   lists: {}           // { listName: [{ id, en, it }] }
 };
 
@@ -21,6 +22,7 @@ let playbackIndex = 0;
 let isPlaying = false;
 let currentUtterance = null;
 let playingListName = null;
+let playbackTimer = null;
 
 // Context for saving: the current translation result
 let pendingTranslation = { en: '', it: '' };
@@ -36,6 +38,8 @@ function loadState() {
       const parsed = JSON.parse(raw);
       state.proxyUrl = parsed.proxyUrl || '';
       state.proxyPassword = parsed.proxyPassword || '';
+      state.pauseDuration = (typeof parsed.pauseDuration === 'number' && parsed.pauseDuration >= 0)
+        ? parsed.pauseDuration : 1;
       state.lists = parsed.lists || {};
     }
   } catch (e) {
@@ -144,6 +148,7 @@ function stopSpeech() {
   isPlaying = false;
   playbackQueue = [];
   playingListName = null;
+  if (playbackTimer) { clearTimeout(playbackTimer); playbackTimer = null; }
   if (window.speechSynthesis) {
     window.speechSynthesis.cancel();
   }
@@ -175,7 +180,9 @@ function playNext() {
   }
   const text = playbackQueue[playbackIndex];
   playbackIndex++;
-  speak(text, playNext);
+  speak(text, () => {
+    playbackTimer = setTimeout(playNext, state.pauseDuration * 1000);
+  });
 }
 
 // ─── Toast notifications ─────────────────────────────────────────────────────
@@ -212,6 +219,7 @@ function closeModal(id) {
 function openSettings() {
   document.getElementById('proxy-url-input').value = state.proxyUrl;
   document.getElementById('proxy-password-input').value = state.proxyPassword;
+  document.getElementById('pause-duration-input').value = state.pauseDuration;
   openModal('modal-settings');
 }
 
@@ -222,8 +230,10 @@ function saveSettings() {
     showToast('Please fill in both the proxy URL and password.', 'warning');
     return;
   }
+  const rawPause = parseFloat(document.getElementById('pause-duration-input').value);
   state.proxyUrl = url;
   state.proxyPassword = pwd;
+  state.pauseDuration = (!isNaN(rawPause) && rawPause >= 0) ? rawPause : 1;
   saveState();
   closeModal('modal-settings');
   showToast('Settings saved!', 'success');

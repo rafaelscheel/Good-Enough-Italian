@@ -49,6 +49,38 @@ function saveState() {
   } catch (e) {
     console.warn('Failed to save state:', e);
   }
+  saveListsToCloud();
+}
+
+function saveListsToCloud() {
+  if (!state.proxyUrl || !state.proxyPassword) return;
+  fetch(state.proxyUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'save',
+      password: state.proxyPassword,
+      lists: state.lists,
+    }),
+  }).catch(() => {});
+}
+
+async function loadListsFromCloud() {
+  if (!state.proxyUrl || !state.proxyPassword) return;
+  try {
+    const response = await fetch(state.proxyUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'load', password: state.proxyPassword }),
+    });
+    if (!response.ok) return;
+    const data = await response.json();
+    if (data.lists && typeof data.lists === 'object') {
+      state.lists = data.lists;
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+      renderLists();
+    }
+  } catch {}
 }
 
 // ─── Unique ID ───────────────────────────────────────────────────────────────
@@ -70,7 +102,7 @@ async function translateText(text) {
     response = await fetch(state.proxyUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, password: state.proxyPassword }),
+      body: JSON.stringify({ action: 'translate', text, password: state.proxyPassword }),
     });
   } catch (err) {
     throw new Error('Could not reach the translation proxy. Check the URL in Settings. (' + err.message + ')');
@@ -623,6 +655,9 @@ function init() {
   if (!state.proxyUrl || !state.proxyPassword) {
     setTimeout(() => openSettings(), 120);
   }
+
+  // Fetch cloud lists in background — renders local cache immediately, updates when cloud responds
+  loadListsFromCloud();
 }
 
 // Wait for DOM

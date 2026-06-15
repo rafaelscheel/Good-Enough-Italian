@@ -9,3 +9,10 @@ compatibility_date = "2025-01-01"
 #   wrangler secret put AUTH_PASSWORD
 #
 # Copy the Worker URL shown after deploy and paste it into the app's Settings.
+
+# KV namespace for cross-device list sync.
+# Before deploying, run:  wrangler kv namespace create LISTS_KV
+# Then replace the id below with the id printed by that command.
+[[kv_namespaces]]
+binding = "LISTS_KV"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"

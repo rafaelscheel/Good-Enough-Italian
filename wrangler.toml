@@ -15,4 +15,4 @@ compatibility_date = "2025-01-01"
 # Then replace the id below with the id printed by that command.
 [[kv_namespaces]]
 binding = "LISTS_KV"
-id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+id = "19d65fc7a3de46f7aef761190e06b4bb"

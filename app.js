@@ -24,6 +24,10 @@ let currentUtterance = null;
 let playingListName = null;
 let playbackTimer = null;
 
+// Speech recognition
+let recognition = null;
+let isRecording = false;
+
 // Context for saving: the current translation result
 let pendingTranslation = { en: '', it: '' };
 
@@ -119,6 +123,58 @@ async function translateText(text) {
   }
 
   return data.translatedText;
+}
+
+// ─── Speech Recognition (dictation) ──────────────────────────────────────────
+function initDictation() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return;
+
+  recognition = new SR();
+  recognition.lang = 'en-US';
+  recognition.interimResults = true;
+  recognition.continuous = false;
+
+  recognition.onresult = (e) => {
+    const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
+    document.getElementById('english-input').value = transcript;
+  };
+
+  recognition.onend = () => {
+    isRecording = false;
+    updateDictateBtn();
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error !== 'aborted') {
+      showToast('Microphone error: ' + e.error, 'error');
+    }
+    isRecording = false;
+    updateDictateBtn();
+  };
+}
+
+function toggleDictation() {
+  if (!recognition) {
+    showToast('Speech recognition is not supported in this browser.', 'warning');
+    return;
+  }
+  if (isRecording) {
+    recognition.stop();
+  } else {
+    document.getElementById('english-input').value = '';
+    isRecording = true;
+    updateDictateBtn();
+    recognition.start();
+  }
+}
+
+function updateDictateBtn() {
+  const btn = document.getElementById('btn-dictate');
+  if (!btn) return;
+  btn.classList.toggle('recording', isRecording);
+  btn.title = isRecording ? 'Stop dictation' : 'Dictate';
+  btn.setAttribute('aria-label', isRecording ? 'Stop dictation' : 'Start dictation');
 }
 
 // ─── Web Speech ──────────────────────────────────────────────────────────────
@@ -591,6 +647,9 @@ function initEvents() {
   // Settings button
   document.getElementById('btn-settings').addEventListener('click', openSettings);
 
+  // Dictation button
+  document.getElementById('btn-dictate').addEventListener('click', toggleDictation);
+
   // Translate button
   document.getElementById('btn-translate').addEventListener('click', doTranslate);
 
@@ -658,6 +717,7 @@ function initEvents() {
 // ─── Bootstrap ───────────────────────────────────────────────────────────────
 function init() {
   loadState();
+  initDictation();
   initEvents();
   renderLists();
 

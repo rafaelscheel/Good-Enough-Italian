@@ -193,6 +193,7 @@ main {
 
 textarea,
 input[type="text"],
+input[type="number"],
 input[type="password"],
 select {
   width: 100%;
@@ -210,6 +211,7 @@ select {
 
 textarea:focus,
 input[type="text"]:focus,
+input[type="number"]:focus,
 input[type="password"]:focus,
 select:focus {
   border-color: var(--green);
